@@ -18,7 +18,7 @@ from multiprocessing import Pool
 from typing import Iterator
 
 
-INPUT_RADAR_DIR: Path = Path("radar_scans")
+INPUT_RADAR_DIR: Path = Path("input")
 OUTPUT_ROOT: Path = Path("output")
 
 
