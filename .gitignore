@@ -4,3 +4,4 @@ output/*
 download_cache/*
 sn.*
 test.ipynb
+__pycache__
