@@ -22,7 +22,6 @@ matplotlib==3.8.4
     #   cartopy
     #   metpy
 metpy==1.6.2
-natsort==8.4.0
 numpy==1.26.4
     # via
     #   cartopy

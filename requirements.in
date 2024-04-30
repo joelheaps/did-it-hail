@@ -1,11 +1,5 @@
-cartopy
-matplotlib
-matplotlib
+xarray
 numpy
 metpy
-pyproj
 cartopy
-xarray
-natsort
-opencv-python
-ffmpeg
+matplotlib
