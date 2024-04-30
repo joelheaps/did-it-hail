@@ -3,3 +3,4 @@ output/*
 .venv
 download_cache/*
 sn.*
+test.ipynb
