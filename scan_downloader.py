@@ -54,12 +54,10 @@ def get_da_from_scan(radar_file: Path) -> xr.DataArray:
 
     range_steps: int = data.shape[-1]  # Probably 1200
     ranges = units.Quantity(np.linspace(0, l3f.max_range, range_steps), "kilometers")
-    azimuths = units.Quantity(
-        get_azimuth_midpoints(
-            np.array(payload["start_az"]), np.array(payload["end_az"])
-        ),
-        "degrees",
+    averaged_azimuths = get_azimuth_midpoints(
+        np.array(payload["start_az"]), np.array(payload["end_az"])
     )
+    azimuths = units.Quantity(averaged_azimuths, "degrees")
 
     # Convert azimuths and ranges to lat/lon
     lons, lats = azimuth_range_to_lat_lon(azimuths, ranges, l3f.lon, l3f.lat)
@@ -80,16 +78,16 @@ def get_da_from_scan(radar_file: Path) -> xr.DataArray:
     # Set metadata
     da.name = f"{l3f.siteID}_{l3f.product_name}_{product_time.isoformat()}"
     da.attrs["site_id"] = l3f.siteID
-    da.attrs["product_name"] = l3f.product_name
-    da.attrs["product_time"] = product_time.isoformat()
-    da.attrs["max_range"] = l3f.max_range
     da.attrs["site_lat"] = l3f.lat
     da.attrs["site_lon"] = l3f.lon
+    da.attrs["max_range"] = l3f.max_range
+    da.attrs["product_name"] = l3f.product_name
+    da.attrs["product_time"] = product_time.isoformat()
 
     return da
 
 
-def download_da():
+def download_and_convert_last_radar_scan():
     ftp_downloader = FtpRadarDownloader(FTP_URL, PRODUCT_PATH)
     with NamedTemporaryFile() as tmp_file:
         ftp_downloader.get_latest_radar_file(Path(tmp_file.name))
@@ -104,7 +102,7 @@ def main():
     # Every 120s, download the latest radar scan and save it to a netcdf file
     while True:
         try:
-            download_da()
+            download_and_convert_last_radar_scan()
         except Exception as e:
             print(f"Error: {e}")
         print("Sleeping for 120s...")
