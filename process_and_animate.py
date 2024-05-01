@@ -19,8 +19,9 @@ from utils import file_order_generator, clear_dir
 
 INPUT_NC_DIR: Path = Path("download_cache")
 OUTPUT_ROOT: Path = Path("output")
-LIMIT_N_FRAMES: int = 0  # Limit for testing
+LIMIT_N_FRAMES: int = 0  # Limit for testing, 0 to disable
 ANIMATION_RESOLUTION: tuple[int, int] = (1440, 1440)
+ANIMATION_FRAMERATE: int = 12
 
 
 def get_hail_index(da: xr.DataArray) -> xr.DataArray:
@@ -98,7 +99,7 @@ def sum_in_steps(data: list[xr.DataArray], frame_dir: Path) -> None:
     name_gen: Iterator[str] = file_order_generator()
 
     for i in range(1, len(data)):
-        print(f"Summing frame {i}")
+        print(f"Resampling and adding frame {i}")
         data_new = scipy.interpolate.griddata(
             (
                 data[i].coords["lat"].values.ravel(),
@@ -113,13 +114,11 @@ def sum_in_steps(data: list[xr.DataArray], frame_dir: Path) -> None:
         # with interpolation/raveling.
         data_new = np.rot90(np.flipud(data_new), 3)
 
-        data[i] = xr.DataArray(
-            data_new,
-            dims=["lon", "lat"],
-            coords={"lon": new_grid.longitudes, "lat": new_grid.latitudes},
-        )
-        sum.values = np.add(sum.values, data[i].values)
+        sum.values = np.add(sum.values, data_new)
         sum.name = f"hail_sum_frame_{next(name_gen)}"
+        sum.attrs = data[i].attrs
+
+        data[i] = xr.DataArray()  # Clear memory, keep type system happy
 
         plot_and_save(sum, frame_dir)
 
@@ -158,7 +157,9 @@ def plot_and_save(da: xr.DataArray, dest: Path) -> None:
 
 
 def animate_image_dir_with_ffmpeg(image_dir: Path, output_file: Path) -> None:
-    ffmpeg.input(str(image_dir / "*.png"), pattern_type="glob", framerate=5).output(
+    ffmpeg.input(
+        str(image_dir / "*.png"), pattern_type="glob", framerate=ANIMATION_FRAMERATE
+    ).output(
         str(output_file),
         pix_fmt="yuv420p",
         vf=f"scale={ANIMATION_RESOLUTION[0]}:{ANIMATION_RESOLUTION[1]}",
