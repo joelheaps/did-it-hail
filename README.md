@@ -8,6 +8,8 @@ Example total hail map generated from several hours of radar data around Omaha, 
 
 ## What is the "hail index"?
 
+The hail index represents a combination of hail severity and hail duration at a given point.
+
 The NEXRAD hydrometeor classification product specifies 3 levels of hail:
 
 - Hail (<1 in.)
