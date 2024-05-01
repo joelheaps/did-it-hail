@@ -12,7 +12,7 @@ The NEXRAD hydrometeor classification product specifies 3 levels of hail:
 
 - Hail (<1 in.)
 - Large Hail (1-2 in.)
-- Giant Hail (≥ 2in
+- Giant Hail (≥ 2in)
 
 (For more info, see [Hydrometeor Classification Algorithm 2 (HCA2) Overview](https://www.nssl.noaa.gov/about/events/review2015/science/files/Schuur_NSSLReview2015.pdf) and [RDA/RPG Build 17.0 Training](https://training.weather.gov/wdtd/buildTraining/build17/documents/build17-deploy.pdf).)
 
