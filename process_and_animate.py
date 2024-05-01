@@ -20,6 +20,7 @@ from utils import file_order_generator, clear_dir
 INPUT_NC_DIR: Path = Path("download_cache")
 OUTPUT_ROOT: Path = Path("output")
 LIMIT_N_FRAMES: int = 0  # Limit for testing
+ANIMATION_RESOLUTION: tuple[int, int] = (1440, 1440)
 
 
 def get_hail_index(da: xr.DataArray) -> xr.DataArray:
@@ -131,8 +132,9 @@ def plot_and_save(da: xr.DataArray, dest: Path) -> None:
     print(f"Plotting {da.name}")
 
     # Create a figure and axis
-    fig = plt.figure(figsize=(50, 50))  # noqa
-    ax = plt.axes(projection=ccrs.PlateCarree())
+    matplotlib.rcParams["figure.dpi"] = 600
+    fig = plt.figure(figsize=(11, 8.5))  # noqa
+    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], projection=ccrs.PlateCarree())  # type: ignore
 
     # Plot the data
     da.plot.pcolormesh(
@@ -141,13 +143,14 @@ def plot_and_save(da: xr.DataArray, dest: Path) -> None:
         y="lat",
         transform=ccrs.PlateCarree(),
         cmap="plasma",
-        add_colorbar=False,
+        add_colorbar=True,
+        cbar_kwargs={"label": "Hail Index"},
     )  # type: ignore
 
     ax.set_aspect("auto")
 
     # Add map features
-    ax.add_feature(USCOUNTIES.with_scale("5m"), edgecolor="black", linewidth=0.8)
+    ax.add_feature(USCOUNTIES.with_scale("5m"), edgecolor="black", linewidth=0.1)  # type: ignore
 
     # Save the figure
     plt.savefig(dest / f"{da.name}.png")
@@ -155,9 +158,11 @@ def plot_and_save(da: xr.DataArray, dest: Path) -> None:
 
 
 def animate_image_dir_with_ffmpeg(image_dir: Path, output_file: Path) -> None:
-    ffmpeg.input(str(image_dir / "*.png"), pattern_type="glob", framerate=12).output(
-        str(output_file), vcodec="hevc", crf=40
-    ).run()
+    ffmpeg.input(str(image_dir / "*.png"), pattern_type="glob", framerate=5).output(
+        str(output_file),
+        pix_fmt="yuv420p",
+        vf=f"scale={ANIMATION_RESOLUTION[0]}:{ANIMATION_RESOLUTION[1]}",
+    ).run(overwrite_output=True)
 
 
 def plot_in_pool(data: list[xr.DataArray], plot_dir: Path) -> None:
@@ -167,12 +172,12 @@ def plot_in_pool(data: list[xr.DataArray], plot_dir: Path) -> None:
         print("Finished plotting")
 
 
-def create_output_dirs() -> tuple[Path, Path, Path]:
-    snapshot_dir = OUTPUT_ROOT / "snapshots"
+def create_output_dirs(root_dir: Path) -> tuple[Path, Path, Path]:
+    snapshot_dir = root_dir / "snapshots"
     snapshot_dir.mkdir(parents=True, exist_ok=True)
-    running_sum_dir = OUTPUT_ROOT / "running_sum"
+    running_sum_dir = root_dir / "running_sum"
     running_sum_dir.mkdir(parents=True, exist_ok=True)
-    video_dir = OUTPUT_ROOT / "video"
+    video_dir = root_dir / "video"
     video_dir.mkdir(parents=True, exist_ok=True)
 
     return snapshot_dir, running_sum_dir, video_dir
@@ -187,7 +192,7 @@ def main():
     """
 
     clear_dir(OUTPUT_ROOT)
-    snapshot_dir, running_sum_dir, video_dir = create_output_dirs()
+    snapshot_dir, running_sum_dir, video_dir = create_output_dirs(OUTPUT_ROOT)
 
     matplotlib.use("agg")
 
