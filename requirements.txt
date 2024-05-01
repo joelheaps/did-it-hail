@@ -11,6 +11,7 @@ contourpy==1.2.1
     # via matplotlib
 cycler==0.12.1
     # via matplotlib
+ffmpeg==1.4
 fonttools==4.51.0
     # via matplotlib
 idna==3.7
