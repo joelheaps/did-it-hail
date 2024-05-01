@@ -192,14 +192,17 @@ def main():
     Expects netCDF-packaged Xarray DataArrays with hydrometeor classification
     radar data, produced by scan_downloader.py (see get_da_from_scan() for details).
     """
-
+    print("Clearing output directory")
     clear_dir(OUTPUT_ROOT)
+
+    print("Creating output directories")
     snapshot_dir, running_sum_dir, video_dir = create_output_dirs(OUTPUT_ROOT)
 
     matplotlib.use("agg")
 
     scans: dict[datetime, xr.DataArray] = {}
 
+    print("Loading radar scans")
     for file in files:
         da = xr.open_dataarray(file)
         time: datetime = datetime.fromisoformat(da.attrs["product_time"])
@@ -210,12 +213,15 @@ def main():
 
     # Limit for testing
     if LIMIT_N_FRAMES > 0:
+        print(f"Limiting to {LIMIT_N_FRAMES} frames")
         scans = dict(list(scans.items())[:LIMIT_N_FRAMES])
 
+    print("Extracting hail data")
     hail_data: list[xr.DataArray] = [get_hail_index(da) for da in scans.values()]
     del scans
 
     # Preserve order with name generator
+    print("Naming hail frames")
     name_gen: Iterator[str] = file_order_generator()
     for da in hail_data:
         da.name = f"hail_frame_{next(name_gen)}"
