@@ -3,4 +3,4 @@ numpy
 metpy
 cartopy
 matplotlib
-ffmpeg
+ffmpeg-python
