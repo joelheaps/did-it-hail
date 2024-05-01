@@ -1,20 +1,24 @@
-import numpy as np
+"""Process data arrays prepared by scan_downloader.py and animate them."""
+
+from collections import OrderedDict
 from dataclasses import dataclass
-import xarray as xr
+from datetime import datetime
+from multiprocessing import Pool, set_start_method
 from pathlib import Path
-import matplotlib
-import matplotlib.pyplot as plt
-from metpy.plots import USCOUNTIES
+from typing import TYPE_CHECKING
 
 import cartopy.crs as ccrs
 import ffmpeg
-from datetime import datetime
-from collections import OrderedDict
-
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
 import scipy
-from multiprocessing import Pool, set_start_method
-from typing import Iterator
-from utils import file_order_generator, clear_dir
+import xarray as xr
+from metpy.plots import USCOUNTIES
+from utils import clear_dir, file_order_generator
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 set_start_method("spawn", force=True)
 
@@ -23,11 +27,15 @@ OUTPUT_ROOT: Path = Path("output")
 LIMIT_N_FRAMES: int = 0  # Limit for testing, 0 to disable
 ANIMATION_RESOLUTION: tuple[int, int] = (1440, 1440)
 ANIMATION_FRAMERATE: int = 12
+HAIL_CLASSIFICATION_RANGE: tuple[int, int] = (10, 12)
 
 
 def get_hail_index(da: xr.DataArray) -> xr.DataArray:
+    """Calculate the hail index from the given data array."""
     # Filter to hail hydrometeor classification numbers
-    hail = da.where(da >= 10).where(da <= 12)
+    hail = da.where(da >= HAIL_CLASSIFICATION_RANGE[0]).where(
+        da <= HAIL_CLASSIFICATION_RANGE[1],
+    )
 
     # Subtract 9 from hail data to get a 1-3 scale
     hail = hail - 9
@@ -42,6 +50,8 @@ def get_hail_index(da: xr.DataArray) -> xr.DataArray:
 
 @dataclass
 class GridData:
+    """Represents resampled grid properties."""
+
     latitudes: np.ndarray
     longitudes: np.ndarray
     grid_latitudes: np.ndarray
@@ -49,8 +59,10 @@ class GridData:
 
 
 def get_regular_grid_from_data(
-    lat_source: np.ndarray, lon_source: np.ndarray
+    lat_source: np.ndarray,
+    lon_source: np.ndarray,
 ) -> GridData:
+    """Generate a regular grid from the given latitude and longitude data arrays."""
     lat_min, lat_max, lat_size = (
         lat_source.min(),
         lat_source.max(),
@@ -69,19 +81,21 @@ def get_regular_grid_from_data(
 
 
 def sum_in_steps(data: list[xr.DataArray], frame_dir: Path) -> None:
-    sum: xr.DataArray = data[0]
+    """Calculate the sum of data arrays in steps and save each resulting sum as an image."""  # noqa: E501
+    sum_: xr.DataArray = data[0]
 
     new_grid = get_regular_grid_from_data(
-        sum.coords["lat"].values, sum.coords["lon"].values
+        sum_.coords["lat"].values,
+        sum_.coords["lon"].values,
     )
 
     # Use scipy to interpolate irregularly spaced data to a regular grid
     sum_new = scipy.interpolate.griddata(
         (
-            sum.coords["lat"].values.ravel(),
-            sum.coords["lon"].values.ravel(),
+            sum_.coords["lat"].values.ravel(),
+            sum_.coords["lon"].values.ravel(),
         ),
-        sum.values.ravel(),
+        sum_.values.ravel(),
         (new_grid.grid_latitudes, new_grid.grid_longitudes),
         method="linear",
     )
@@ -90,7 +104,7 @@ def sum_in_steps(data: list[xr.DataArray], frame_dir: Path) -> None:
     # with interpolation/raveling.
     sum_new = np.rot90(np.flipud(sum_new), 3)
 
-    sum = xr.DataArray(
+    sum_ = xr.DataArray(
         sum_new,
         dims=["lon", "lat"],
         coords={"lat": new_grid.latitudes, "lon": new_grid.longitudes},
@@ -115,25 +129,26 @@ def sum_in_steps(data: list[xr.DataArray], frame_dir: Path) -> None:
         # with interpolation/raveling.
         data_new = np.rot90(np.flipud(data_new), 3)
 
-        sum.values = np.add(sum.values, data_new)
-        sum.name = f"hail_sum_frame_{next(name_gen)}"
-        sum.attrs = data[i].attrs
+        sum_.values = np.add(sum_.values, data_new)
+        sum_.name = f"hail_sum_frame_{next(name_gen)}"
+        sum_.attrs = data[i].attrs
 
         data[i] = xr.DataArray()  # Clear memory, keep type system happy
 
-        plot_and_save(sum, frame_dir)
+        plot_and_save(sum_, frame_dir)
 
 
 # Plot and save figure to output dir
 def plot_and_save(da: xr.DataArray, dest: Path) -> None:
+    """Plot and save the given DataArray as an image."""
     # Filter out zero values to make transparent
     da = da.where(da > 0)
 
     print(f"Plotting {da.name}")
 
     # Create a figure and axis
-    matplotlib.rcParams["figure.dpi"] = 600
-    fig = plt.figure(figsize=(11, 8.5))  # noqa
+    mpl.rcParams["figure.dpi"] = 600
+    fig = plt.figure(figsize=(11, 8.5))
     ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], projection=ccrs.PlateCarree())  # type: ignore
 
     # Plot the data
@@ -158,8 +173,11 @@ def plot_and_save(da: xr.DataArray, dest: Path) -> None:
 
 
 def animate_image_dir_with_ffmpeg(image_dir: Path, output_file: Path) -> None:
+    """Animate the images in the specified directory using ffmpeg."""
     ffmpeg.input(
-        str(image_dir / "*.png"), pattern_type="glob", framerate=ANIMATION_FRAMERATE
+        str(image_dir / "*.png"),
+        pattern_type="glob",
+        framerate=ANIMATION_FRAMERATE,
     ).output(
         str(output_file),
         pix_fmt="yuv420p",
@@ -168,6 +186,7 @@ def animate_image_dir_with_ffmpeg(image_dir: Path, output_file: Path) -> None:
 
 
 def plot_in_pool(data: list[xr.DataArray], plot_dir: Path) -> None:
+    """Plot and save multiple DataArrays in parallel using multiprocessing.Pool."""
     print(f"Plotting {len(data)} frames")
     with Pool(4) as p:
         p.starmap(plot_and_save, [(da, plot_dir) for da in data])
@@ -175,6 +194,7 @@ def plot_in_pool(data: list[xr.DataArray], plot_dir: Path) -> None:
 
 
 def create_output_dirs(root_dir: Path) -> tuple[Path, Path, Path]:
+    """Create output directories for snapshots, running sum, and video."""
     snapshot_dir = root_dir / "snapshots"
     snapshot_dir.mkdir(parents=True, exist_ok=True)
     running_sum_dir = root_dir / "running_sum"
@@ -185,7 +205,8 @@ def create_output_dirs(root_dir: Path) -> tuple[Path, Path, Path]:
     return snapshot_dir, running_sum_dir, video_dir
 
 
-def main():
+def main() -> None:
+    """Execute the processing and animation of hail data."""
     files: Iterator[Path] = INPUT_NC_DIR.glob("*")
 
     """
@@ -198,7 +219,7 @@ def main():
     print("Creating output directories")
     snapshot_dir, running_sum_dir, video_dir = create_output_dirs(OUTPUT_ROOT)
 
-    matplotlib.use("agg")
+    mpl.use("agg")
 
     scans: dict[datetime, xr.DataArray] = {}
 
