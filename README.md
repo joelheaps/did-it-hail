@@ -23,3 +23,9 @@ A future version may map these three categories separately to show a more granul
 ### Limitations
 
 Hail is only sampled at given radar scan intervals (about 5 minutes).  Without some sort of frame interpolation, unfortunately, gaps or stripes can be observed in depictions of small or fast-moving storms.  The patterns are usually obvious at least, and you can infer that similar hail fell between the stripes.
+
+# Animations
+
+Radar Hail Depiction  |  Running Hail Sum
+----------------------|------------------
+![](assets/hail_movement.mp4) | ![](assets/hail_sum.mp4)
