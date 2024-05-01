@@ -12,10 +12,11 @@ from datetime import datetime
 from collections import OrderedDict
 
 import scipy
-from multiprocessing import Pool
+from multiprocessing import Pool, set_start_method
 from typing import Iterator
 from utils import file_order_generator, clear_dir
 
+set_start_method("spawn", force=True)
 
 INPUT_NC_DIR: Path = Path("download_cache")
 OUTPUT_ROOT: Path = Path("output")
@@ -168,7 +169,7 @@ def animate_image_dir_with_ffmpeg(image_dir: Path, output_file: Path) -> None:
 
 def plot_in_pool(data: list[xr.DataArray], plot_dir: Path) -> None:
     print(f"Plotting {len(data)} frames")
-    with Pool(8) as p:
+    with Pool(4) as p:
         p.starmap(plot_and_save, [(da, plot_dir) for da in data])
         print("Finished plotting")
 
