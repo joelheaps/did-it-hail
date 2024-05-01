@@ -26,10 +26,6 @@ Hail is only sampled at given radar scan intervals (about 5 minutes).  Without s
 
 # Animations
 
-![](assets/hail_movement.mov)
-
-![](assets/hail_sum.mov)
-
-Radar Hail Depiction  |  Running Hail Sum
-----------------------|------------------
- | 
+<table><tr><th>Radar Hail Depiction</th><th>Running Hail Sum</th></tr>
+<tr><td><video src="assets/hail_movement.mp4" width="320" height="240" controls></video></td>
+<td><video src="assets/hail_sum.mp4" width="320" height="240" controls></video></td></tr></table>
