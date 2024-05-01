@@ -5,3 +5,4 @@ download_cache/*
 sn.*
 test.ipynb
 __pycache__
+.pdm-python
