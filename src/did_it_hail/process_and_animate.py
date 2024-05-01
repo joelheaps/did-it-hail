@@ -27,6 +27,7 @@ OUTPUT_ROOT: Path = Path("output")
 LIMIT_N_FRAMES: int = 0  # Limit for testing, 0 to disable
 ANIMATION_RESOLUTION: tuple[int, int] = (1440, 1440)
 ANIMATION_FRAMERATE: int = 12
+RESAMPLE_SCALE_FACTOR: int = 2
 HAIL_CLASSIFICATION_RANGE: tuple[int, int] = (10, 12)
 
 
@@ -66,12 +67,12 @@ def get_regular_grid_from_data(
     lat_min, lat_max, lat_size = (
         lat_source.min(),
         lat_source.max(),
-        len(lat_source) * 2,
+        len(lat_source) * RESAMPLE_SCALE_FACTOR,
     )
     lon_min, lon_max, lon_size = (
         lon_source.min(),
         lon_source.max(),
-        len(lon_source) * 2,
+        len(lon_source) * RESAMPLE_SCALE_FACTOR,
     )
     latitudes = np.linspace(lat_min, lat_max, lat_size)
     longitudes = np.linspace(lon_min, lon_max, lon_size)
