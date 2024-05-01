@@ -24,4 +24,4 @@ distribution = false
 
 [tool.ruff]
 select = ["ALL"]
-ignore = ["PD011", "T201", "PGH003"]
+ignore = ["PD011", "T201", "PGH003", "ANN101"]
