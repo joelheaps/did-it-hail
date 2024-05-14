@@ -111,6 +111,10 @@ def resample_to_reference_area(
 
 def minimize_data(da: xr.DataArray) -> xr.DataArray:
     """Remove all empty rows and columns from the data array."""
+    # Set 0 values to NaN
+    da = da.where(da > 0, np.nan)
+
+    # Drop rows and columns that are all NaN
     da.dropna("x", how="all")
     da.dropna("y", how="all")
 
