@@ -1,4 +1,5 @@
 repository/*
+assets/*
 .venv
 download_cache/*
 sn.*
