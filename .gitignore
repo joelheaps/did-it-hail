@@ -1,5 +1,4 @@
-input/*
-output/*
+repository/*
 .venv
 download_cache/*
 sn.*
