@@ -1,5 +1,5 @@
 repository/*
-assets/*
+*.nc
 .venv
 download_cache/*
 sn.*
