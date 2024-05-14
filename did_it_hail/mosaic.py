@@ -104,31 +104,6 @@ def main() -> None:
     for day_subdir in day_subdirs:
         logger.info("Processing data for day", day=day_subdir.name)
 
-        # # Create intermediate directory for the day
-        # day_inter = INTERMEDIATE_DIR / day_subdir.name
-        # day_inter.mkdir(parents=True, exist_ok=True)
-
-        # for file in day_subdir.glob("*.nc"):
-        #     logger.info("Loading radar data", file=file)
-
-        #     rda = xr.open_dataarray(file)
-        #     rda = set_crs_and_spatial_dims(rda)
-        #     rda = resample_to_common_area(rda, empty_grid)
-
-        #     # Set 0 values to NaN
-        #     rda = rda.where(rda > 0, np.nan)
-
-        #     rda = rda.dropna("x", how="all")
-        #     rda = rda.dropna("y", how="all")
-        #     rds = xr.Dataset({"data": rda})
-        #     # Save with compression
-        #     rds.to_netcdf(
-        #         day_inter / file.name,
-        #         engine="netcdf4",
-        #         encoding={"data": {"zlib": True, "complevel": 5}},
-        #     )
-        #     del rda
-
         # Get radar data
         scans: dict[datetime, xr.Dataset] = get_radar_data(day_subdir)
 
