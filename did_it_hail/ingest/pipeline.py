@@ -26,6 +26,7 @@ REPOSITORY: Path = Path(__file__).parent.parent / "repository"
 
 
 def get_reference_area() -> xr.DataArray:
+    """Get the reference area as an xarray DataArray."""
     if not _REFERENCE_AREA_FILE.exists():
         generate_reference_area_nc(_REFERENCE_AREA_FILE)
     return xr.open_dataarray(_REFERENCE_AREA_FILE)
