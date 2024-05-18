@@ -15,7 +15,7 @@ from did_it_hail.ingest.transform import (
     resample_to_reference_area,
     resample_to_regular_grid,
 )
-from did_it_hail.utils.generate_grid import generate_reference_area_nc
+from did_it_hail.utils.generate_ref_grid import generate_reference_area_nc
 
 logger = structlog.get_logger()
 

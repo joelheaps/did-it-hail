@@ -38,4 +38,4 @@ dev = [
 ]
 [tool.ruff]
 select = ["ALL"]
-ignore = ["PD011", "T201", "PGH003", "ANN101", "ERA001", "S101"]
+ignore = ["PD011", "T201", "PGH003", "ANN101", "ERA001", "S101", "D205"]
